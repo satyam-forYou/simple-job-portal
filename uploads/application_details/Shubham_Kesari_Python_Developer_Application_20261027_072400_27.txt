@@ -1,0 +1,31 @@
+SMART JOB PORTAL - APPLICATION DETAILS
+
+Application ID: 27
+Job Title: Python Developer
+Company: TechCorp
+Applied On: 27 October 2026, 07:24 AM
+Status: Applied
+
+APPLICANT DETAILS
+Name: Shubham Kesari
+Email: kesarishubham576@gmail.com
+Phone: 4578154865
+Location: mumbai
+
+EDUCATION
+graguate
+
+SKILLS
+python
+
+EXPERIENCE
+fresher
+
+PROFESSIONAL PROFILE / BIO
+no
+
+COVER NOTE
+Not provided
+
+RESUME FILE
+Shubham_Kesari_Python_Developer_Resume_20261027_125400_aafea5.docx

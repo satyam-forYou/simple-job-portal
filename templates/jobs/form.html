@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ 'Edit Job' if job else 'Post New Job' }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+    <div class="container">
+        <a class="navbar-brand" href="{{ url_for('index') }}"><span class="logo-icon"><i class="bi bi-briefcase-fill"></i></span> Smart<span>Jobs</span></a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu"><span class="navbar-toggler-icon"></span></button>
+        <div class="collapse navbar-collapse" id="navMenu">
+            <ul class="navbar-nav me-auto align-items-lg-center">
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('list_jobs') }}"><i class="bi bi-search"></i> Browse Jobs</a></li>
+                {% if current_user.is_authenticated and not current_user.is_admin %}
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('ats_score') }}"><i class="bi bi-stars"></i> ATS Analyzer</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('my_applications') }}"><i class="bi bi-send-check"></i> Applications</a></li>
+                {% endif %}
+                {% if current_user.is_authenticated and current_user.is_admin %}
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('create_job') }}"><i class="bi bi-plus-circle"></i> Post Job</a></li>
+                {% endif %}
+            </ul>
+            <ul class="navbar-nav align-items-lg-center">
+                {% if current_user.is_authenticated %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard') }}"><i class="bi bi-grid-1x2"></i> Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link user-pill" href="{{ url_for('profile') }}"><i class="bi bi-person-circle"></i> {{ current_user.name }}</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">Logout</a></li>
+                {% else %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('login') }}">Login</a></li>
+                    <li class="nav-item"><a class="btn btn-light btn-sm signup-nav" href="{{ url_for('register') }}">Sign Up</a></li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-3">
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category if category != 'message' else 'info' }} alert-dismissible fade show shadow-sm" role="alert">
+        <i class="bi {% if category == 'success' %}bi-check-circle{% elif category == 'danger' %}bi-exclamation-triangle{% else %}bi-info-circle{% endif %} me-1"></i>{{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+{% endwith %}
+</div>
+
+<main class="container my-4">
+<h3 class="mb-4">{{ 'Edit Job' if job else 'Post a New Job' }}</h3>
+<div class="card p-4">
+    <form method="POST">
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Job Title</label>
+                <input type="text" class="form-control" name="title" value="{{ job.title if job else '' }}" required>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">Company</label>
+                <input type="text" class="form-control" name="company" value="{{ job.company if job else '' }}" required>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Work Location *</label>
+                <select class="form-select" name="location_mode" id="locationMode" required>
+                    <option value="onsite" {% if not job or job.location != 'Remote' %}selected{% endif %}>On-site / Hybrid</option>
+                    <option value="remote" {% if job and job.location == 'Remote' %}selected{% endif %}>Remote</option>
+                </select>
+            </div>
+            <div class="col-md-4 mb-3" id="locationBox">
+                <label class="form-label">City / Location *</label>
+                <input type="text" class="form-control" name="location" id="locationInput" value="{{ job.location if job and job.location != 'Remote' else '' }}" placeholder="e.g. Pune, Maharashtra">
+                <div class="form-text">Choose Remote above if the job can be done from anywhere.</div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Job Type</label>
+                <select class="form-select" name="job_type" required>
+                    {% for t in ['Full-time', 'Part-time', 'Internship', 'Contract'] %}
+                    <option value="{{ t }}" {% if job and job.job_type == t %}selected{% endif %}>{{ t }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Category</label>
+                <input type="text" class="form-control" name="category" value="{{ job.category if job else '' }}" placeholder="e.g. Software Development">
+            </div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea class="form-control" name="description" rows="5" required>{{ job.description if job else '' }}</textarea>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Required Skills <small class="text-muted">(comma-separated — used for ATS matching)</small></label>
+            <input type="text" class="form-control" name="required_skills" value="{{ job.required_skills if job else '' }}" placeholder="e.g. Python, Flask, SQL">
+        </div>
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Minimum Experience (years)</label>
+                <input type="number" class="form-control" name="min_experience" min="0" value="{{ job.min_experience if job else 0 }}">
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Salary Range</label>
+                <input type="text" class="form-control" name="salary_range" value="{{ job.salary_range if job else '' }}" placeholder="e.g. 4-6 LPA">
+            </div>
+            {% if job %}
+            <div class="col-md-4 mb-3">
+                <label class="form-label d-block">Status</label>
+                <div class="form-check form-switch mt-2">
+                    <input class="form-check-input" type="checkbox" name="is_active" id="is_active" {% if job.is_active %}checked{% endif %}>
+                    <label class="form-check-label" for="is_active">Active listing</label>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        <button type="submit" class="btn btn-primary">{{ 'Save Changes' if job else 'Post Job' }}</button>
+        <a href="{{ url_for('list_jobs') }}" class="btn btn-outline-secondary">Cancel</a>
+    </form>
+</div>
+</main>
+<footer class="site-footer"><div class="container d-flex flex-wrap justify-content-between gap-2"><small>Smart Job Portal · Mini Project</small><small>Jobs · Applications · ATS Resume Analyzer</small></div></footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script>
+const locationMode = document.getElementById('locationMode');
+const locationInput = document.getElementById('locationInput');
+function updateLocationField() {
+  const remote = locationMode.value === 'remote';
+  locationInput.disabled = remote;
+  locationInput.required = !remote;
+  if (remote) locationInput.value = '';
+}
+if (locationMode) { locationMode.addEventListener('change', updateLocationField); updateLocationField(); }
+</script>
+</body>
+</html>

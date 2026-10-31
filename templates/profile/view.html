@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+    <div class="container">
+        <a class="navbar-brand" href="{{ url_for('index') }}"><span class="logo-icon"><i class="bi bi-briefcase-fill"></i></span> Smart<span>Jobs</span></a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu"><span class="navbar-toggler-icon"></span></button>
+        <div class="collapse navbar-collapse" id="navMenu">
+            <ul class="navbar-nav me-auto align-items-lg-center">
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('list_jobs') }}"><i class="bi bi-search"></i> Browse Jobs</a></li>
+                {% if current_user.is_authenticated and not current_user.is_admin %}
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('ats_score') }}"><i class="bi bi-stars"></i> ATS Analyzer</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('my_applications') }}"><i class="bi bi-send-check"></i> Applications</a></li>
+                {% endif %}
+                {% if current_user.is_authenticated and current_user.is_admin %}
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('create_job') }}"><i class="bi bi-plus-circle"></i> Post Job</a></li>
+                {% endif %}
+            </ul>
+            <ul class="navbar-nav align-items-lg-center">
+                {% if current_user.is_authenticated %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard') }}"><i class="bi bi-grid-1x2"></i> Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link user-pill" href="{{ url_for('profile') }}"><i class="bi bi-person-circle"></i> {{ current_user.name }}</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">Logout</a></li>
+                {% else %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('login') }}">Login</a></li>
+                    <li class="nav-item"><a class="btn btn-light btn-sm signup-nav" href="{{ url_for('register') }}">Sign Up</a></li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-3">
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category if category != 'message' else 'info' }} alert-dismissible fade show shadow-sm" role="alert">
+        <i class="bi {% if category == 'success' %}bi-check-circle{% elif category == 'danger' %}bi-exclamation-triangle{% else %}bi-info-circle{% endif %} me-1"></i>{{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+{% endwith %}
+</div>
+
+<main class="container my-4">
+<h3 class="mb-4"><i class="bi bi-person-circle"></i> {{ "Recruiter" if user.is_admin else "Student" }} Profile</h3>
+<div class="card p-4">
+{% if user.is_admin %}
+    <div class="alert alert-info"><i class="bi bi-shield-check"></i> Recruiter profile is fixed and cannot be edited.</div>
+{% endif %}
+<div class="row">
+    <div class="col-md-6 mb-3"><strong>Name</strong><div class="form-control bg-light">{{ user.name }}</div></div>
+    <div class="col-md-6 mb-3"><strong>Email</strong><div class="form-control bg-light">{{ user.email }}</div></div>
+    <div class="col-md-6 mb-3"><strong>Phone</strong><div class="form-control bg-light">{{ user.phone or 'Not added' }}</div></div>
+    <div class="col-md-6 mb-3"><strong>Location</strong><div class="form-control bg-light">{{ user.location or 'Not added' }}</div></div>
+    <div class="col-md-6 mb-3"><strong>Skills</strong><div class="form-control bg-light">{{ user.skills or 'Not added' }}</div></div>
+    <div class="col-md-6 mb-3"><strong>Education</strong><div class="form-control bg-light">{{ user.education or 'Not added' }}</div></div>
+    <div class="col-md-6 mb-3"><strong>Experience</strong><div class="form-control bg-light">{{ user.experience or 'Not added' }}</div></div>
+    <div class="col-md-6 mb-3"><strong>Bio</strong><div class="form-control bg-light">{{ user.bio or 'Not added' }}</div></div>
+</div>
+{% if user.is_admin %}
+    <p class="text-muted mb-0">Recruiter accounts are created by the system.</p>
+{% else %}
+    <hr>
+    <h5>Edit Student Profile</h5>
+    <form method="POST" enctype="multipart/form-data">
+        <div class="row">
+            <div class="col-md-6 mb-3"><label>Full Name</label><input class="form-control" name="name" value="{{ user.name }}" required></div>
+            <div class="col-md-6 mb-3"><label>Phone</label><input class="form-control" name="phone" value="{{ user.phone or '' }}"></div>
+            <div class="col-md-6 mb-3"><label>Location</label><input class="form-control" name="location" value="{{ user.location or '' }}"></div>
+            <div class="col-md-6 mb-3"><label>Skills</label><input class="form-control" name="skills" value="{{ user.skills or '' }}"></div>
+            <div class="col-md-6 mb-3"><label>Education</label><textarea class="form-control" name="education">{{ user.education or '' }}</textarea></div>
+            <div class="col-md-6 mb-3"><label>Experience</label><textarea class="form-control" name="experience">{{ user.experience or '' }}</textarea></div>
+            <div class="col-12 mb-3"><label>Bio</label><textarea class="form-control" name="bio">{{ user.bio or '' }}</textarea></div>
+            <div class="col-12 mb-3"><label>Resume (PDF/DOCX)</label><input class="form-control" type="file" name="resume" accept=".pdf,.docx"></div>
+        </div>
+        <button class="btn btn-primary">Save Profile</button>
+        {% if user.resume_filename %}<a class="btn btn-outline-secondary" href="{{ url_for('ats_score') }}">Open ATS Resume Analyzer</a>{% endif %}
+    </form>
+{% endif %}
+</div>
+</main>
+<footer class="site-footer"><div class="container d-flex flex-wrap justify-content-between gap-2"><small>Smart Job Portal · Mini Project</small><small>Jobs · Applications · ATS Resume Analyzer</small></div></footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+</body>
+</html>
